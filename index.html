@@ -2,12 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>List</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 10px;
+            background-color: #f4f4f4;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
+<div id="Lists">
+    <h1>Наши списки</h1>
+    <ul id="listList">Загрузка данных...</ul>
 
+    <h2>Добавить новый список</h2>
+    <div>
+        <input id="newListInput" type="text" placeholder="Название нового списка" />
+        <button id="addListButton">Добавить</button>
+    </div>
+</div>
+<div id="Tasks">
 
+    <ul id="taskList">Задачи:</ul>
+
+    <div>
+        <input id="newTaskInput" type="text" placeholder="Новая задача" />
+        <button id="addTaskButton">Добавить</button>
+    </div>
+
+</div>
 <script src="script.js"></script>
 </body>
 </html>
