@@ -46,7 +46,7 @@ async function fetchLists() {
         // Добавляем каждую запись в виде элемента списка
         data.records.forEach((record) => {
             const li = document.createElement('li');
-            li.textContent = `${record.fields.id}: ${record.fields.name}`;
+            li.textContent = `${record.fields.name}`;
 
             /*
             // Добавляем обработчик события для клика
@@ -141,8 +141,10 @@ async function fetchTasks(listID1, listName) {
 
         const data = await response.json();
 
+        data.records.sort((a, b) => a.fields.id - b.fields.id);
         // Фильтруем задачи по ID списка
         const filteredTasks = data.records.filter(task => task.fields.list_id === listID);
+
 
         // Если задач нет
         if (filteredTasks.length === 0) {
@@ -150,8 +152,39 @@ async function fetchTasks(listID1, listName) {
         } else {
             // Добавляем задачи в список
             filteredTasks.forEach(task => {
+
+                console.log(task.fields.Status ? "YES" : "NO");
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = task.fields.Status;
+                checkbox.addEventListener('change', async () => {
+                    li.classList.toggle('done');
+                    task.fields.Status = !task.fields.Status;
+                    const updateData = {
+                        fields: {
+                            Status: task.fields.Status, // Send the updated status in the correct format
+                        },
+                    };
+                    const updateResponse = await fetch(`${TASK_URL}/${task.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            Authorization: `Bearer ${PERSONAL_ACCESS_TOKEN}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(updateData) //Don't forget to add body with request data
+                    })
+
+                    if (!updateResponse.ok)
+                    {
+                        throw new Error(`Ошибка выполнения задачи ${updateResponse.status}`);
+                    }
+                });
+
                 const li = document.createElement('li');
-                li.textContent = task.fields.text;
+                li.appendChild(checkbox);
+                const span = document.createElement('span');
+                span.textContent = task.fields.text;
+                li.appendChild(span);
 
                 // Добавляем кнопку "Удалить" для задачи
                 const deleteButton = document.createElement('button');
@@ -177,8 +210,14 @@ async function fetchTasks(listID1, listName) {
                         console.error('Ошибка при удалении задачи:', error);
                     }
                 });
-
                 li.appendChild(deleteButton);
+
+                if (task.fields.Status === true) {
+                    li.classList.add('done');
+                }
+                li.addEventListener('click', () => {
+
+                })
                 taskList.appendChild(li);
             });
         }
@@ -270,7 +309,6 @@ function AddTaskButton() {
             alert('Введите название новой задачи!');
             return;
         }
-
         try {
             // Выполняем POST-запрос для добавления записи в Airtable
             const response = await fetch(TASK_URL, {
@@ -298,12 +336,42 @@ function AddTaskButton() {
 
             // Добавляем новую запись в DOM вручную
             const li = document.createElement('li');
-            li.textContent = `${newRecord.fields.text}`;
 
             // Создаем кнопку "Удалить" для новой записи
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Удалить';
             deleteButton.style.marginLeft = '10px';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = false;
+            checkbox.addEventListener('change', async () => {
+                li.classList.toggle('done');
+                newRecord.fields.Status = !newRecord.fields.Status;
+                const updateData = {
+                    fields: {
+                        Status: newRecord.fields.Status, // Send the updated status in the correct format
+                    },
+                };
+                const updateResponse = await fetch(`${TASK_URL}/${newRecord.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: `Bearer ${PERSONAL_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updateData) //Don't forget to add body with request data
+                })
+
+                if (!updateResponse.ok)
+                {
+                    throw new Error(`Ошибка выполнения задачи ${updateResponse.status}`);
+                }
+            });
+            li.appendChild(checkbox);
+
+            const span = document.createElement('span');
+            span.textContent = newRecord.fields.text;
+            li.appendChild(span);
 
             // Добавляем обработчик для удаления
             deleteButton.addEventListener('click', async () => {
@@ -336,8 +404,8 @@ function AddTaskButton() {
             // Очищаем поле ввода
             newTaskInput.value = '';
         } catch (error) {
-            console.error('Ошибка при добавлении нового списка:', error);
-            alert('Не удалось добавить новый список. Проверьте консоль для подробностей.');
+            console.error('Ошибка при добавлении нового задачи:', error);
+            alert('Не удалось добавить новый Задачу. Проверьте консоль для подробностей.');
         }
     });
 }
@@ -411,6 +479,19 @@ addListButton.addEventListener('click', async () => {
                 console.error('Ошибка при удалении записи:', error);
             }
         });
+
+        // Кнопка "Заглянуть в список"
+        const viewButton = document.createElement('button');
+        viewButton.textContent = 'Заглянуть в список';
+        viewButton.style.marginLeft = '10px';
+
+        // Добавляем обработчик события для кнопки
+        viewButton.addEventListener('click', () => {
+            console.log(`Заглядываем в список: ${newRecord.fields.name} (ID: ${newRecord.fields.id})`);
+            fetchTasks(newRecord.fields.id, newRecord.fields.name); // Вызываем загрузку задач для конкретного списка
+        });
+
+        li.appendChild(viewButton); // Вставляем кнопку в элемент списка
 
         // Присоединяем кнопку к элементу списка
         li.appendChild(deleteButton);
