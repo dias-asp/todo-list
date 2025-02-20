@@ -1,0 +1,57 @@
+button {
+    margin-left: 10px;
+    border: none;
+    border-radius: 2px;
+    padding: 3px;
+    color: white;
+    cursor: pointer;
+}
+
+.addTaskButton{
+    background-color: forestgreen;
+}
+.addTaskButton:hover{
+    background-color: lawngreen;
+}
+.deleteButton{
+    background-color: orangered;
+}
+.deleteTaskButton{
+    background-color: darkgrey;
+}
+#addListButton{
+    background-color: forestgreen;
+}
+input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+}
+
+.listName {
+    font-size: 25px;
+}
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    font-size: 20px;
+}
+h1 {
+    text-align: center;
+}
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+li {
+    padding: 10px;
+    background-color: #f4f4f4;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
+.hidden {
+    display: none;
+}
+.done {
+    text-decoration: line-through;
+    color: grey;
+}

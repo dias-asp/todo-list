@@ -13,15 +13,35 @@ const TASK_URL = `https://api.airtable.com/v0/${BASE_ID}/${TASKS}`;
 // Ссылка на список, куда будем добавлять пользователей
 const listList = document.getElementById('listList');
 let taskList;
+let allTasks;
 // const taskList = document.getElementById('taskList');
 const Lists = document.getElementById('Lists');
 const Tasks = document.getElementById('Tasks');
 
-let listID;
+taskLists = [undefined,]
+// let listID;
 // Функция для получения данных из Airtable
 async function fetchLists() {
     Lists.classList.remove('hidden');
     Tasks.classList.add('hidden');
+
+    const response = await fetch(TASK_URL, {
+        headers: {
+            Authorization: `Bearer ${PERSONAL_ACCESS_TOKEN}`,
+        },
+    });
+
+    if (!response.ok) {
+        console.log(response);
+        console.log("ASDASDDADSDADS");
+        throw new Error(`Ошибка: ${response.status}`);
+    }
+
+    allTasks = await response.json();
+
+    allTasks.records.sort((a, b) => a.fields.id - b.fields.id);
+
+
     try {
         // Выполняем GET-запрос к Airtable API
         const response = await fetch(LIST_URL, {
@@ -44,9 +64,14 @@ async function fetchLists() {
         data.records.sort((a, b) => a.fields.id - b.fields.id);
 
         // Добавляем каждую запись в виде элемента списка
+        let cnt = 1;
         data.records.forEach((record) => {
             const li = document.createElement('li');
-            li.textContent = `${record.fields.name}`;
+            const span = document.createElement('span');
+            span.textContent = `${record.fields.name}`;
+            span.classList.add('listName');
+            // li.textContent = `${record.fields.name}`;
+            li.appendChild(span);
 
             /*
             // Добавляем обработчик события для клика
@@ -59,6 +84,7 @@ async function fetchLists() {
             // Создаем кнопку "Удалить"
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Удалить';
+            deleteButton.classList.add('deleteButton');
             deleteButton.style.marginLeft = '10px';
 
             // Добавляем обработчик события для удаления
@@ -83,6 +109,7 @@ async function fetchLists() {
                 }
             });
 
+            /*
             // Кнопка "Заглянуть в список"
             const viewButton = document.createElement('button');
             viewButton.textContent = 'Заглянуть в список';
@@ -94,10 +121,31 @@ async function fetchLists() {
                 fetchTasks(record.fields.id, record.fields.name); // Вызываем загрузку задач для конкретного списка
             });
 
-            li.appendChild(viewButton); // Вставляем кнопку в элемент списка
+            li.appendChild(viewButton); // Вставляем кнопку в элемент списка*/
 
             // Вставляем кнопку в элемент списка
             li.appendChild(deleteButton);
+
+            fetchTasks(record.fields.id, record.fields.name, cnt++);
+            li.appendChild(taskList);
+
+            newTaskInput = document.createElement('input');
+            newTaskInput.type = 'text';
+            newTaskInput.classList.add('newTaskInput');
+            newTaskInput.placeholder = "Новая задача";
+
+            addTaskButton = document.createElement('button');
+            addTaskButton.classList.add('addTaskButton');
+            addTaskButton.textContent = "Добавить";
+
+
+            const div = document.createElement('div');
+            div.classList.add('addTask');
+            div.appendChild(newTaskInput);
+            div.appendChild(addTaskButton);
+            AddTaskButton(addTaskButton, record.fields.id, cnt - 1);
+
+            li.appendChild(div);
 
             // Добавляем элемент в список
             listList.appendChild(li);
@@ -107,10 +155,10 @@ async function fetchLists() {
         listList.innerHTML = `<li>Не удалось загрузить данные. Проверьте консоль для подробностей.</li>`;
     }
 }
-async function fetchTasks(listID1, listName) {
-    listID = listID1;
-    Tasks.classList.remove('hidden');
-    Lists.classList.add('hidden');
+async function fetchTasks(listId, listName, i) {
+    // listID = listID1;
+    // Tasks.classList.remove('hidden');
+    // Lists.classList.add('hidden');
     Tasks.innerHTML = `
         <h1>${listName}</h1>
         <ul id="taskList"></ul>
@@ -120,30 +168,12 @@ async function fetchTasks(listID1, listName) {
         </div>
     `;
 
-    taskList = document.getElementById('taskList');
+    taskList = document.createElement('ul');
     taskList.innerHTML = '';
-    const addTaskForm = document.getElementById('addTaskForm');
-    const newTaskName = document.getElementById('newTaskName');
-    addTaskButton = document.getElementById('addTaskButton');
-    AddTaskButton();
-    newTaskInput = document.getElementById('newTaskInput');
+    taskLists.push(taskList);
 
     try {
-        const response = await fetch(TASK_URL, {
-            headers: {
-                Authorization: `Bearer ${PERSONAL_ACCESS_TOKEN}`,
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ошибка: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        data.records.sort((a, b) => a.fields.id - b.fields.id);
-        // Фильтруем задачи по ID списка
-        const filteredTasks = data.records.filter(task => task.fields.list_id === listID);
+        const filteredTasks = allTasks.records.filter(task => task.fields.list_id === listId);
 
 
         // Если задач нет
@@ -190,6 +220,7 @@ async function fetchTasks(listID1, listName) {
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = 'Удалить';
                 deleteButton.style.marginLeft = '10px';
+                deleteButton.classList.add('deleteTaskButton');
                 deleteButton.addEventListener('click', async () => {
                     try {
                         const deleteResponse = await fetch(`${TASK_URL}/${task.id}`, {
@@ -215,77 +246,10 @@ async function fetchTasks(listID1, listName) {
                 if (task.fields.Status === true) {
                     li.classList.add('done');
                 }
-                li.addEventListener('click', () => {
-
-                })
+                console.log(listId, 'asd');
                 taskList.appendChild(li);
             });
         }
-/*
-        // Добавление новой задачи
-        addTaskForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const taskName = newTaskName.value.trim();
-            if (!taskName) return;
-
-            try {
-                const createResponse = await fetch(TASK_URL, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${PERSONAL_ACCESS_TOKEN}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        fields: {
-                            name: taskName,
-                            list: listID, // Привязка задачи к текущему списку
-                        },
-                    }),
-                });
-
-                if (!createResponse.ok) {
-                    throw new Error(`Ошибка при добавлении задачи: ${createResponse.status}`);
-                }
-
-                const newTask = await createResponse.json();
-
-                // Добавляем новую задачу в список задач (на странице)
-                const li = document.createElement('li');
-                li.textContent = newTask.fields.name;
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Удалить';
-                deleteButton.style.marginLeft = '10px';
-                deleteButton.addEventListener('click', async () => {
-                    try {
-                        const deleteResponse = await fetch(`${TASK_URL}/${newTask.id}`, {
-                            method: 'DELETE',
-                            headers: {
-                                Authorization: `Bearer ${PERSONAL_ACCESS_TOKEN}`,
-                            },
-                        });
-
-                        if (!deleteResponse.ok) {
-                            throw new Error(`Ошибка удаления задачи: ${deleteResponse.status}`);
-                        }
-
-                        li.remove();
-                        console.log(`Задача с ID ${newTask.id} успешно удалена`);
-                    } catch (error) {
-                        console.error('Ошибка при удалении задачи:', error);
-                    }
-                });
-
-                li.appendChild(deleteButton);
-                taskList.appendChild(li);
-
-                // Очищаем поле ввода
-                newTaskName.value = '';
-            } catch (error) {
-                console.error('Ошибка при добавлении задачи:', error);
-            }
-        });*/
     } catch (error) {
         console.error('Ошибка при получении задач:', error);
         Tasks.innerHTML = `<h1>${listName}</h1><p>Не удалось загрузить задачи</p>`;
@@ -296,13 +260,22 @@ let newTaskInput = document.getElementById('newTaskInput');
 let addTaskButton = document.getElementById('addTaskButton');
 
 
-function AddTaskButton() {
+function AddClearButton(button, listId){
+    button.addEventListener('click', () => {
+        list = button.closest('ul');
+    });
+}
+
+function AddTaskButton(button, listId, i) {
 
 
 // Обработчик для кнопки "Добавить"
-    addTaskButton.addEventListener('click', async () => {
+    button.addEventListener('click', async () => {
         // Читаем значение из поля ввода
-        const newTaskName = newTaskInput.value.trim();
+
+        let div = button.closest('div');
+        let inputForm = div.getElementsByClassName('newTaskInput')[0];
+        const newTaskName = inputForm.value.trim();
 
         // Проверяем, введено ли имя
         if (!newTaskName) {
@@ -320,7 +293,7 @@ function AddTaskButton() {
                 body: JSON.stringify({
                     fields: {
                         text: newTaskName, // Поле "name" (или замените на нужное поле таблицы)
-                        list_id: listID,
+                        list_id: listId,
                         Status: false,
                     },
                 }),
@@ -341,6 +314,7 @@ function AddTaskButton() {
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Удалить';
             deleteButton.style.marginLeft = '10px';
+            deleteButton.classList.add('deleteTaskButton');
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -399,10 +373,11 @@ function AddTaskButton() {
             li.appendChild(deleteButton);
 
             // Добавляем новый элемент в список
-            taskList.appendChild(li);
+            console.log('button', i);
+            taskLists[i].appendChild(li);
 
             // Очищаем поле ввода
-            newTaskInput.value = '';
+            inputForm.value = '';
         } catch (error) {
             console.error('Ошибка при добавлении нового задачи:', error);
             alert('Не удалось добавить новый Задачу. Проверьте консоль для подробностей.');
