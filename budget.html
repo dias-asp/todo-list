@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Бюджет</title>
+  <link rel="stylesheet" href="budgetstyle.css">
+</head>
+<body>
+<h1>Наш бюджет</h1>
+<h3>Баланс на данный момент: <span id="balance">0</span></h3>
+
+<!-- Форма для добавления доходов/расходов -->
+<div>
+  <input type="text" id="name" placeholder="Наименование">
+  <input type="number" id="amount" placeholder="Сумма">
+  <button id="add-btn">Добавить</button>
+</div>
+
+<!-- Списки доходов и расходов -->
+<div class="budget-container">
+  <div class="list-section">
+    <h3>Доходы:</h3>
+    <ul id="income-list"></ul>
+  </div>
+
+  <div class="list-section">
+    <h3>Расходы:</h3>
+    <ul id="expense-list"></ul>
+  </div>
+</div>
+
+<script src="budgetscript.js"></script>
+</body>
+</html>
