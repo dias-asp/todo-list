@@ -9,6 +9,10 @@ const addButton = document.getElementById('add-btn');
 const BASE_ID = 'appUfYNiRFYJShBvy';
 const PERSONAL_ACCESS_TOKEN = 'patjQIbx6o2yZrYKY.36130faa2834465fd93912bdb1df8a7d609d2769ae224fc1f5ee52ef49d7d248';
 const TABLE_NAME = 'budget';
+const monthtext = document.getElementById('month');
+let month = (new Date()).getMonth();
+const next = document.getElementById('month-more');
+const prev = document.getElementById('month-less');
 // Функция для обновления баланса
 function updateBalance(amount) {
     balance += amount;
@@ -49,14 +53,18 @@ function addItem(name, amount, date, recordId = null) {
 
     // Кнопка для удаления записи
     const deleteButton = document.createElement('button');
-    deleteButton.textContent = 'Удалить';
+    // deleteButton.textContent = 'Удалить';
     deleteButton.style.marginLeft = '10px';
-    deleteButton.style.background = '#f44336';
+    deleteButton.style.background = '#f00';
     deleteButton.style.color = '#fff';
     deleteButton.style.border = 'none';
-    deleteButton.style.padding = '5px 10px';
+    deleteButton.style.padding = '0';
+    deleteButton.style.width = '40px';
     deleteButton.style.cursor = 'pointer';
     deleteButton.style.borderRadius = '4px';
+    const bin = document.createElement('img');
+    bin.src = 'bin2.png';
+    deleteButton.appendChild(bin);
 
     deleteButton.addEventListener('click', () => {
         if (recordId) {
@@ -75,7 +83,7 @@ function addItem(name, amount, date, recordId = null) {
         expenseList.appendChild(listItem);
     }
 
-    updateBalance(amount);
+    // updateBalance(amount);
 }
 
 // Функция для отправки данных в Airtable
@@ -111,8 +119,10 @@ async function saveToAirtable(name, amount) {
         const record = await response.json();
         console.log('Успешно сохранено в Airtable!');
 
+        updateBalance(amount);
+
         // Добавляем запись в DOM с присвоенным record ID
-        addItem(name, amount, date, record.id);
+        if (parseInt(date[5] + date[6]) === month + 1) addItem(name, amount, date, record.id);
     } catch (error) {
         console.error('Ошибка при сохранении в Airtable:', error);
     }
@@ -120,9 +130,11 @@ async function saveToAirtable(name, amount) {
 
 // Функция для получения данных из Airtable
 async function loadFromAirtable() {
+    const date = new Date();
+    date.setMonth(month);
+    monthtext.textContent = date.toLocaleString('ru-RU', { month: 'long' });
     const apiUrl = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
     const apiToken = `Bearer ${PERSONAL_ACCESS_TOKEN}`;
-
     try {
         const response = await fetch(apiUrl, {
             method: 'GET',
@@ -137,7 +149,14 @@ async function loadFromAirtable() {
 
         const data = await response.json();
         data.records.sort((a, b) => a.fields.id - b.fields.id);
+        balance = 0;
+        incomeList.innerHTML = '';
+        expenseList.innerHTML = '';
         data.records.forEach(record => {
+            updateBalance(record.fields.amount);
+        });
+        const filtered = data.records.filter(record => parseInt(record.fields.date[5] + record.fields.date[6]) === month + 1);
+        filtered.forEach(record => {
             const { name, amount, date } = record.fields;
             addItem(name, amount, date, record.id); // Передаём ID записи
         });
@@ -168,5 +187,21 @@ addButton.addEventListener('click', () => {
     amountInput.value = '';
 });
 
+next.addEventListener('click', () => {
+    month++;
+    if (month > 11) {
+        month = 0;
+    }
+    loadFromAirtable(month);
+});
+
+prev.addEventListener('click', () => {
+    month--;
+    if (month < 0) {
+        month = 11;
+    }
+    loadFromAirtable(month);
+});
+
 // Загрузка данных при загрузке страницы
-window.addEventListener('DOMContentLoaded', loadFromAirtable);
+window.addEventListener('DOMContentLoaded', loadFromAirtable());

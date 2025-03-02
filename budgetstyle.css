@@ -83,3 +83,16 @@ li {
 li:last-child {
     border-bottom: none;
 }
+
+.month-section {
+    width: 45%;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 18px;
+    margin: auto;
+}
+
+#month {
+    font-weight: bold;
+    font-size: 24px;
+}
